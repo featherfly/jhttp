@@ -11,16 +11,14 @@
 package cn.featherfly.jhttp;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import cn.featherfly.jhttp.request.BasicMethodHttpRequestBuilder;
 import cn.featherfly.jhttp.request.FormMethodHttpRequestBuilder;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.BasicMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.FormMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpRequest;
 import cn.featherfly.jhttp.request.HttpRequestAware;
 import cn.featherfly.jhttp.request.HttpRequestBuilder;
 
@@ -33,6 +31,9 @@ import cn.featherfly.jhttp.request.HttpRequestBuilder;
  */
 public interface HttpClient<RS, C> {
 
+    /**
+     * Shutdown.
+     */
     void shutdown();
 
     /**
@@ -46,33 +47,12 @@ public interface HttpClient<RS, C> {
     }
 
     /**
-     * add HttpListener listener.
-     *
-     * @param listener the listener
-     * @return the c
-     */
-    C on(HttpListener listener);
-
-    /**
-     * remove HttpListener listener.
-     *
-     * @param listener the listener
-     * @return the c
-     */
-    C un(HttpListener listener);
-
-    /**
      * get request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.GET))
-            .getHttpRequest();
-        return get(request.getUrl(), request.getParameters(), request.getHeaders());
-    }
+    RS get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * get request.
@@ -103,20 +83,29 @@ public interface HttpClient<RS, C> {
      * @param headers the headers
      * @return response content
      */
-    RS get(String url, Map<String, Serializable> params, Map<String, String> headers);
+    default RS get(String url, Map<String, Serializable> params, Map<String, String> headers) {
+        return get(url, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * get request with params.
+     *
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS get(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * post request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS post(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.POST))
-            .getHttpRequest();
-        return post(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-    }
+    RS post(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * post request.
@@ -183,20 +172,30 @@ public interface HttpClient<RS, C> {
      * @param headers the headers
      * @return response content
      */
-    RS post(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers);
+    default RS post(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers) {
+        return post(url, requestBody, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * Post requestBody with medieType format.
+     *
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS post(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * put request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS put(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PUT))
-            .getHttpRequest();
-        return put(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-    }
+    RS put(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * Put.
@@ -263,20 +262,30 @@ public interface HttpClient<RS, C> {
      * @param headers the headers
      * @return response content
      */
-    RS put(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers);
+    default RS put(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers) {
+        return put(url, requestBody, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * Put requestBody with medieType format.
+     *
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS put(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * delete request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS delete(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.DELETE))
-            .getHttpRequest();
-        return delete(request.getUrl(), request.getParameters(), request.getHeaders());
-    }
+    RS delete(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * Delete.
@@ -303,6 +312,7 @@ public interface HttpClient<RS, C> {
      * Delete.
      *
      * @param url the url
+     * @param params the params
      * @param headers the headers
      * @return response content
      */
@@ -338,23 +348,34 @@ public interface HttpClient<RS, C> {
      *
      * @param url the url
      * @param requestBody the request body
+     * @param params the params
      * @param headers the headers
      * @return response content
      */
-    RS delete(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers);
+    default RS delete(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers) {
+        return delete(url, requestBody, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * Delete requestBody with medieType format.
+     *
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS delete(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * patch request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS patch(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PATCH))
-            .getHttpRequest();
-        return patch(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-    }
+    RS patch(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * patch request.
@@ -421,20 +442,30 @@ public interface HttpClient<RS, C> {
      * @param headers the headers
      * @return response content
      */
-    RS patch(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers);
+    default RS patch(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers) {
+        return patch(url, requestBody, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * patch request requestBody with medieType format.
+     *
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS patch(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * head request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.HEAD))
-            .getHttpRequest();
-        return head(request.getUrl(), request.getParameters(), request.getHeaders());
-    }
+    RS head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * head request.
@@ -465,34 +496,29 @@ public interface HttpClient<RS, C> {
      * @param headers the headers
      * @return response content
      */
-    RS head(String url, Map<String, Serializable> params, Map<String, String> headers);
+    default RS head(String url, Map<String, Serializable> params, Map<String, String> headers) {
+        return head(url, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * head request with params.
+     *
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return response content
+     */
+    RS head(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners);
 
     /**
      * Request.
      *
-     * @param <T> the generic type
      * @param requestBuilder the request builder
      * @return the rs
      */
-    default RS request(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new HttpReQuestBuilderImpl()).getHttpRequest();
-        switch (request.getMethod()) {
-            case GET:
-                return get(request.getUrl(), request.getParameters(), request.getHeaders());
-            case POST:
-                return post(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-            case PUT:
-                return put(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-            case DELETE:
-                return delete(request.getUrl(), request.getParameters(), request.getHeaders());
-            case HEAD:
-                return head(request.getUrl(), request.getParameters(), request.getHeaders());
-            case PATCH:
-                return patch(request.getUrl(), request.getRequestBody(), request.getParameters(), request.getHeaders());
-            default:
-                throw new HttpException("unsupport http method " + request.getMethod().toString());
-        }
-    }
+    RS request(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * Request.
@@ -536,7 +562,7 @@ public interface HttpClient<RS, C> {
             case PUT:
                 return put(url, params, headers);
             case DELETE:
-                return delete(url, headers);
+                return delete(url, params, headers);
             case HEAD:
                 return head(url, params, headers);
             case PATCH:

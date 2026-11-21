@@ -16,7 +16,10 @@ import cn.featherfly.common.lang.Str;
 import cn.featherfly.common.lang.SystemPropertyUtils;
 import cn.featherfly.common.lang.WordUtils;
 import cn.featherfly.common.structure.ChainMapImpl;
+import cn.featherfly.http.server.Result;
 import cn.featherfly.http.server.User;
+import cn.featherfly.jhttp.HttpListener;
+import cn.featherfly.jhttp.MediaType;
 import cn.featherfly.jhttp.UploadFile;
 
 /**
@@ -41,6 +44,63 @@ public class HttpAsyncTest {
         user = new User();
         user.setName("yufei羽飞");
         user.setAge(18);
+    }
+
+    @Test
+    public void listener() throws InterruptedException {
+        AtomicLong deserializeCount = new AtomicLong();
+        AtomicLong serializeCount = new AtomicLong();
+        String url = Str.format(host, "user2");
+        HttpListener l1 = countingListener(deserializeCount, serializeCount);
+        HttpListener l2 = countingListener(deserializeCount, serializeCount);
+        HttpListener l3 = countingListener(deserializeCount, serializeCount);
+        HttpAsyncClientImpl client = HttpAsyncClientImpl.builder().listener(l1, l2, l3).build();
+
+        assertResult(client.post(url, user, Result.class), OK, deserializeCount, serializeCount, 3, 3);
+
+        deserializeCount.set(0);
+        serializeCount.set(0);
+        assertResult(client.post(req -> req.removeListener(l1, l2, l3).url(url).parameter(user), Result.class), OK,
+            deserializeCount, serializeCount, 0, 0);
+    }
+
+    private HttpListener countingListener(AtomicLong deserializeCount, AtomicLong serializeCount) {
+        return new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                serializeCount.incrementAndGet();
+            }
+        };
+    }
+
+    private void assertResult(cn.featherfly.jhttp.HttpRequestCompletion<Result> completion, String expectedCode,
+        AtomicLong deserializeCount, AtomicLong serializeCount, int expectedDeserialize, int expectedSerialize)
+        throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        completion.completion(result -> {
+            try {
+                assertEquals(result.getCode(), expectedCode);
+                assertEquals(deserializeCount.get(), expectedDeserialize);
+                assertEquals(serializeCount.get(), expectedSerialize);
+            } catch (Throwable t) {
+                error.set(t);
+            } finally {
+                latch.countDown();
+            }
+        }, er -> {
+            error.set(new RuntimeException(er.getMessage()));
+            latch.countDown();
+        });
+        latch.await(10, TimeUnit.SECONDS);
+        if (error.get() != null) {
+            throw new AssertionError(error.get());
+        }
     }
 
     @Test

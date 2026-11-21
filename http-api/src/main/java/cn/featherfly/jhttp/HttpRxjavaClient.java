@@ -11,14 +11,16 @@
 package cn.featherfly.jhttp;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import cn.featherfly.jhttp.request.HttpRequest;
+import cn.featherfly.jhttp.request.BasicMethodHttpRequestBuilder;
+import cn.featherfly.jhttp.request.FormMethodHttpRequestBuilder;
 import cn.featherfly.jhttp.request.HttpRequestAware;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.BasicMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.FormMethodHttpRequestBuilderImpl;
+import cn.featherfly.jhttp.request.HttpRequestBuilder;
 import io.reactivex.rxjava3.core.Observable;
 
 /**
@@ -28,6 +30,16 @@ import io.reactivex.rxjava3.core.Observable;
  */
 public interface HttpRxjavaClient
     extends HttpClient<Observable<String>, HttpRxjavaClient>, HttpDownloadClient<Observable<Long>> {
+
+    /**
+     * Request.
+     *
+     * @param <R> the generic type
+     * @param requestBuilder the request builder
+     * @param responseType the response type
+     * @return the rs
+     */
+    <R> Observable<R> request(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder, Class<R> responseType);
 
     /**
      * request with params and deserialize response .
@@ -143,12 +155,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> get(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.GET))
-            .getHttpRequest();
-        return get(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * get request with params and deserialize response .
@@ -185,8 +193,24 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> Observable<R> get(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Class<R> responseType) {
+        return get(url, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * get request with params and deserialize response .
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
     <R> Observable<R> get(String url, Map<String, Serializable> params, Map<String, String> headers,
-        Class<R> responseType);
+        Class<R> responseType, Collection<HttpListener> listeners);
 
     /**
      * head request with params and deserialize response .
@@ -196,12 +220,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> head(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.HEAD))
-            .getHttpRequest();
-        return head(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * head request with params and deserialize response .
@@ -238,8 +258,24 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> Observable<R> head(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Class<R> responseType) {
+        return head(url, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * head request with params and deserialize response .
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
     <R> Observable<R> head(String url, Map<String, Serializable> params, Map<String, String> headers,
-        Class<R> responseType);
+        Class<R> responseType, Collection<HttpListener> listeners);
 
     /**
      * post request with params and deserialize response .
@@ -249,12 +285,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> post(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.POST))
-            .getHttpRequest();
-        return post(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> post(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Post params with FormBody and deserialize response.
@@ -322,8 +354,25 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> Observable<R> post(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return post(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Post requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
     <R> Observable<R> post(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> listeners);
 
     /**
      * put request with params and deserialize response .
@@ -333,12 +382,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> put(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PUT))
-            .getHttpRequest();
-        return put(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> put(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Put params with FormBody.
@@ -381,20 +426,6 @@ public interface HttpRxjavaClient
     }
 
     /**
-     * Put requestBody with medieType format and deserialize response.
-     *
-     * @param <R> the generic type
-     * @param url the url
-     * @param requestBody the request body
-     * @param params the params
-     * @param headers the headers
-     * @param responseType the responset type
-     * @return the http request completion
-     */
-    <R> Observable<R> put(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
-        Class<R> responseType);
-
-    /**
      * Put params with FormBody.
      *
      * @param <R> the generic type
@@ -410,6 +441,37 @@ public interface HttpRxjavaClient
     }
 
     /**
+     * Put requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the responset type
+     * @return the http request completion
+     */
+    default <R> Observable<R> put(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return put(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Put requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the responset type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
+    <R> Observable<R> put(String url, Object requestBody, Map<String, Serializable> params, Map<String, String> headers,
+        Class<R> responseType, Collection<HttpListener> listeners);
+
+    /**
      * patch request with params and deserialize response .
      *
      * @param <R> the generic type
@@ -417,12 +479,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> patch(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PATCH))
-            .getHttpRequest();
-        return patch(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> patch(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * patch request params with FormBody.
@@ -491,8 +549,25 @@ public interface HttpRxjavaClient
      * @param responseType the responset type
      * @return the http request completion
      */
+    default <R> Observable<R> patch(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return patch(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * patch request requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the responset type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
     <R> Observable<R> patch(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> listeners);
 
     /**
      * delete request with params and deserialize response .
@@ -502,12 +577,8 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> Observable<R> delete(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.DELETE))
-            .getHttpRequest();
-        return delete(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> Observable<R> delete(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Delete request and deserialize response.
@@ -588,8 +659,25 @@ public interface HttpRxjavaClient
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> Observable<R> delete(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return delete(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Delete requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param listeners the listeners
+     * @return the http request completion
+     */
     <R> Observable<R> delete(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> listeners);
 
     /**
      * get autoSubscribeOnIo value.

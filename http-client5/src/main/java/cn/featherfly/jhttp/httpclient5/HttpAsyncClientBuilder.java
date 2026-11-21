@@ -21,7 +21,7 @@ public class HttpAsyncClientBuilder extends AbstractHttpClientBuilder<HttpAsyncC
     public HttpAsyncClientImpl build() {
         prepareToBuild();
         HttpAsyncClientImpl client = new HttpAsyncClientImpl(buildClassicClient(), buildAsyncClient(), defaultHeaders,
-            serialization, contentType);
+            listeners, serialization, contentType);
         applyCommon(client);
         return client;
     }

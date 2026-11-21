@@ -10,8 +10,11 @@ package cn.featherfly.jhttp.request;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
+import cn.featherfly.jhttp.HttpListener;
 import cn.featherfly.jhttp.HttpMethod;
 
 /**
@@ -30,6 +33,9 @@ public class HttpRequest {
     private Map<String, Serializable> parameters = new HashMap<>(0);
 
     private Object requestBody;
+
+    // 请求会话最终使用的listeners,初始化的时候就拿到client的全局listeners
+    private Set<HttpListener> listeners = new LinkedHashSet<>(0);
 
     /**
      * get url value
@@ -119,5 +125,23 @@ public class HttpRequest {
      */
     public void setMethod(HttpMethod method) {
         this.method = method;
+    }
+
+    /**
+     * get listeners value
+     *
+     * @return listeners
+     */
+    public Set<HttpListener> getListeners() {
+        return listeners;
+    }
+
+    /**
+     * set listeners value
+     *
+     * @param listeners listeners
+     */
+    public void setListeners(Set<HttpListener> listeners) {
+        this.listeners = listeners;
     }
 }

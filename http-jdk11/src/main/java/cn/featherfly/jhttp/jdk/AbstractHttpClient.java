@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.Charset;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -25,6 +26,7 @@ import cn.featherfly.common.serialization.SerializableStrategy;
 import cn.featherfly.common.serialization.SerializationException;
 import cn.featherfly.common.serialization.SerializationExceptionCode;
 import cn.featherfly.common.serialization.Serializer;
+import cn.featherfly.common.structure.ChainSetImpl;
 import cn.featherfly.jhttp.HttpCode;
 import cn.featherfly.jhttp.HttpErrorResponseException;
 import cn.featherfly.jhttp.HttpException;
@@ -81,12 +83,13 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      *
      * @param client the JDK provider client
      * @param headers the default headers
+     * @param listeners the global listeners
      * @param serialization the serialization
      * @param contentType the request content type
      */
     protected AbstractHttpClient(java.net.http.HttpClient client, Map<String, String> headers,
-        SerializableStrategy serialization, String contentType) {
-        init(client, headers, serialization, contentType);
+        Set<HttpListener> listeners, SerializableStrategy serialization, String contentType) {
+        init(client, headers, listeners, serialization, contentType);
     }
 
     /**
@@ -94,10 +97,11 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      *
      * @param client the JDK provider client
      * @param headers the default headers
+     * @param listeners the global listeners
      * @param serialization the serialization
      * @param contentType the request content type
      */
-    protected void init(java.net.http.HttpClient client, Map<String, String> headers,
+    protected void init(java.net.http.HttpClient client, Map<String, String> headers, Set<HttpListener> listeners,
         SerializableStrategy serialization, String contentType) {
         AssertIllegalArgument.isNotNull(client, "client");
         AssertIllegalArgument.isNotNull(serialization, "serialization");
@@ -105,6 +109,9 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
         this.client = client;
         this.serialization = serialization;
         mediaType = contentType;
+        if (Lang.isNotEmpty(listeners)) {
+            this.listeners.addAll(listeners);
+        }
         Charset charset = JdkHttpUtils.charsetOf(contentType);
         textPlain = "text/plain; charset=" + charset.name();
         this.serialization.setCharset(charset);
@@ -180,9 +187,10 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      * Serialize a request body.
      *
      * @param requestBody the request body
+     * @param listeners the listeners for this request
      * @return the bytes
      */
-    protected byte[] serialize(Object requestBody) {
+    protected byte[] serialize(Object requestBody, Collection<HttpListener> listeners) {
         Charset charset = JdkHttpUtils.charsetOf(mediaType);
         if (requestBody instanceof String) {
             return ((String) requestBody).getBytes(charset);
@@ -205,9 +213,11 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      * @param responseBody the response body
      * @param contentType the response content type
      * @param responseType the response type
+     * @param listeners the listeners for this request
      * @return the deserialized object
      */
-    protected <T> T deserialize(byte[] responseBody, String contentType, Class<T> responseType) {
+    protected <T> T deserialize(byte[] responseBody, String contentType, Class<T> responseType,
+        Collection<HttpListener> listeners) {
         Serializer resSerializer = serializer;
         if (deserializeWithContentType && Lang.isNotEmpty(contentType)) {
             Serializer chosen = getSerializer(JdkHttpUtils.baseType(contentType), false);
@@ -482,27 +492,19 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
     }
 
     /**
-     * On.
+     * Gets the final listeners for a request. Includes the client's global listeners
+     * and the listeners configured specifically for this request.
      *
-     * @param listener the listener
-     * @return the client
+     * @param customListeners the request-level listeners
+     * @return the final listeners
      */
-    @SuppressWarnings("unchecked")
-    public C on(HttpListener listener) {
-        listeners.add(listener);
-        return (C) this;
-    }
-
-    /**
-     * Removes the.
-     *
-     * @param listener the listener
-     * @return the client
-     */
-    @SuppressWarnings("unchecked")
-    public C un(HttpListener listener) {
-        listeners.remove(listener);
-        return (C) this;
+    protected Collection<HttpListener> getFinalListeners(Collection<HttpListener> customListeners) {
+        ChainSetImpl<HttpListener> finalListeners = new ChainSetImpl<>(new LinkedHashSet<>());
+        finalListeners.addAll(listeners);
+        if (customListeners != null) {
+            finalListeners.addAll(customListeners);
+        }
+        return finalListeners;
     }
 
     /**

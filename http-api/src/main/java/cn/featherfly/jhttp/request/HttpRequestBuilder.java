@@ -8,12 +8,14 @@
  */
 package cn.featherfly.jhttp.request;
 
+import cn.featherfly.jhttp.HttpListenerRegistry;
+
 /**
  * HttpRequestBuilder.
  *
  * @author zhongj
  */
-public interface HttpRequestBuilder {
+public interface HttpRequestBuilder extends HttpListenerRegistry<HttpRequestBuilder> {
 
     /**
      * Url.

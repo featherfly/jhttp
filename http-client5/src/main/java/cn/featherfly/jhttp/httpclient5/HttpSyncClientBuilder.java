@@ -21,7 +21,7 @@ public class HttpSyncClientBuilder extends AbstractHttpClientBuilder<HttpSyncCli
     public HttpSyncClientImpl build() {
         prepareToBuild();
         HttpSyncClientImpl client = new HttpSyncClientImpl(buildClassicClient(), buildAsyncClient(), defaultHeaders,
-            serialization, contentType);
+            listeners, serialization, contentType);
         applyCommon(client);
         return client;
     }

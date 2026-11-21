@@ -1,10 +1,9 @@
 package cn.featherfly.jhttp.okhttp;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +47,7 @@ public abstract class AbstractHttpClientBuilder<B extends AbstractHttpClientBuil
     protected int downloadProgressPerSize = -1;
 
     /** The listeners. */
-    protected final List<HttpListener> listeners = new ArrayList<>();
+    protected final Set<HttpListener> listeners = new LinkedHashSet<>();
 
     /**
      * Gets the concrete builder.
@@ -220,12 +219,14 @@ public abstract class AbstractHttpClientBuilder<B extends AbstractHttpClientBuil
     /**
      * Add a http listener.
      *
-     * @param listener the listener
+     * @param listeners the listeners
      * @return this builder
      */
-    public B listener(HttpListener listener) {
-        if (listener != null) {
-            listeners.add(listener);
+    public B listener(HttpListener... listeners) {
+        if (listeners != null) {
+            for (HttpListener listener : listeners) {
+                this.listeners.add(listener);
+            }
         }
         return self();
     }
@@ -266,9 +267,6 @@ public abstract class AbstractHttpClientBuilder<B extends AbstractHttpClientBuil
         }
         if (downloadProgressPerSize > 0) {
             client.setDownloadProgressPerSize(downloadProgressPerSize);
-        }
-        for (HttpListener listener : listeners) {
-            client.on(listener);
         }
     }
 

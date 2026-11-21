@@ -8,13 +8,15 @@
  */
 package cn.featherfly.jhttp.request;
 
+import cn.featherfly.jhttp.HttpListenerRegistry;
+
 /**
  * MethodAwareHttpBuilder.
  *
  * @author zhongj
  * @param <R> the generic type
  */
-public interface MethodAwareHttpBuilder<R> {
+public interface MethodAwareHttpBuilder<R> extends HttpListenerRegistry<MethodAwareHttpBuilder<R>> {
 
     /**
      * Url.

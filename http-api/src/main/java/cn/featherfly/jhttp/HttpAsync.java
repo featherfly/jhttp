@@ -48,28 +48,6 @@ public final class HttpAsync {
     }
 
     /**
-     * On.
-     *
-     * @param listener the listener
-     * @return the http async client
-     * @see cn.featherfly.jhttp.HttpClient#on(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpAsyncClient on(HttpListener listener) {
-        return CLIENT.on(listener);
-    }
-
-    /**
-     * Un.
-     *
-     * @param listener the listener
-     * @return the http async client
-     * @see cn.featherfly.jhttp.HttpClient#un(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpAsyncClient un(HttpListener listener) {
-        return CLIENT.un(listener);
-    }
-
-    /**
      * Gets the.
      *
      * @param requestBuilder the request builder
@@ -352,7 +330,7 @@ public final class HttpAsync {
      *      java.lang.Class)
      */
     public static <R> HttpRequestCompletion<R> post(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
+        Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder, Class<R> responseType) {
         return CLIENT.post(requestBuilder, responseType);
     }
 
@@ -544,7 +522,7 @@ public final class HttpAsync {
      *      java.lang.Class)
      */
     public static <R> HttpRequestCompletion<R> put(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
+        Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder, Class<R> responseType) {
         return CLIENT.put(requestBuilder, responseType);
     }
 
@@ -736,7 +714,7 @@ public final class HttpAsync {
      *      java.lang.Class)
      */
     public static <R> HttpRequestCompletion<R> patch(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
+        Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder, Class<R> responseType) {
         return CLIENT.patch(requestBuilder, responseType);
     }
 

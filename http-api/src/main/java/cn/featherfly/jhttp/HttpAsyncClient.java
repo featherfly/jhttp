@@ -11,15 +11,16 @@
 package cn.featherfly.jhttp;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 import cn.featherfly.jhttp.request.BasicMethodHttpRequestBuilder;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.BasicMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.FormMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpRequest;
+import cn.featherfly.jhttp.request.FormMethodHttpRequestBuilder;
 import cn.featherfly.jhttp.request.HttpRequestAware;
+import cn.featherfly.jhttp.request.HttpRequestBuilder;
 
 /**
  * HttpAsyncClient.
@@ -28,6 +29,17 @@ import cn.featherfly.jhttp.request.HttpRequestAware;
  */
 public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String>, HttpAsyncClient>,
     HttpDownloadClient<HttpRequestCompletion<Long>> {
+
+    /**
+     * Request.
+     *
+     * @param <R> the generic type
+     * @param requestBuilder the request builder
+     * @param responseType the response type
+     * @return the rs
+     */
+    <R> HttpRequestCompletion<R> request(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * request with params and deserialize response .
@@ -144,12 +156,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.GET))
-            .getHttpRequest();
-        return get(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * get request with params and deserialize response .
@@ -186,8 +194,24 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> HttpRequestCompletion<R> get(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Class<R> responseType) {
+        return get(url, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * get request with params and deserialize response .
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return the http request completion
+     */
     <R> HttpRequestCompletion<R> get(String url, Map<String, Serializable> params, Map<String, String> headers,
-        Class<R> responseType);
+        Class<R> responseType, Collection<HttpListener> httpListeners);
 
     /**
      * head request with params and deserialize response .
@@ -197,12 +221,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
-        Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.HEAD))
-            .getHttpRequest();
-        return head(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * head request with params and deserialize response .
@@ -239,8 +259,24 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> HttpRequestCompletion<R> head(String url, Map<String, Serializable> params, Map<String, String> headers,
+        Class<R> responseType) {
+        return head(url, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * head request with params and deserialize response .
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return the http request completion
+     */
     <R> HttpRequestCompletion<R> head(String url, Map<String, Serializable> params, Map<String, String> headers,
-        Class<R> responseType);
+        Class<R> responseType, Collection<HttpListener> httpListeners);
 
     /**
      * post request with params and deserialize response .
@@ -250,12 +286,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> post(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.POST))
-            .getHttpRequest();
-        return post(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> post(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Post params with FormBody and deserialize response.
@@ -324,8 +356,25 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return response string
      */
+    default <R> HttpRequestCompletion<R> post(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return post(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Post params with FormBody and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return response string
+     */
     <R> HttpRequestCompletion<R> post(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> httpListeners);
 
     /**
      * put request with params and deserialize response .
@@ -335,12 +384,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> put(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PUT))
-            .getHttpRequest();
-        return put(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> put(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Put params with FormBody.
@@ -409,8 +454,25 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> HttpRequestCompletion<R> put(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return put(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Put params with FormBody.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return the http request completion
+     */
     <R> HttpRequestCompletion<R> put(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> httpListeners);
 
     /**
      * patch request with params and deserialize response .
@@ -420,12 +482,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> patch(
-        Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder, Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new FormMethodHttpRequestBuilderImpl(HttpMethod.PATCH))
-            .getHttpRequest();
-        return patch(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> patch(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * patch request params with FormBody.
@@ -460,13 +518,16 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      *
      * @param <R> the generic type
      * @param url the url
+     * @param requestBody the request body
      * @param params the params
      * @param headers the headers
      * @param responseType the response type
      * @return the http request completion
      */
-    <R> HttpRequestCompletion<R> patch(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+    default <R> HttpRequestCompletion<R> patch(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return patch(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
 
     /**
      * patch request requestBody with medieType format and deserialize response.
@@ -497,6 +558,21 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
     }
 
     /**
+     * patch request params with FormBody.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return the http request completion
+     */
+    <R> HttpRequestCompletion<R> patch(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> httpListeners);
+
+    /**
      * delete request with params and deserialize response .
      *
      * @param <R> the generic type
@@ -504,12 +580,8 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return responseType instance
      */
-    default <R> HttpRequestCompletion<R> delete(
-        Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder, Class<R> responseType) {
-        HttpRequest request = requestBuilder.apply(new BasicMethodHttpRequestBuilderImpl(HttpMethod.DELETE))
-            .getHttpRequest();
-        return delete(request.getUrl(), request.getParameters(), request.getHeaders(), responseType);
-    }
+    <R> HttpRequestCompletion<R> delete(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
+        Class<R> responseType);
 
     /**
      * Delete request and deserialize response.
@@ -590,7 +662,24 @@ public interface HttpAsyncClient extends HttpClient<HttpRequestCompletion<String
      * @param responseType the response type
      * @return the http request completion
      */
+    default <R> HttpRequestCompletion<R> delete(String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Class<R> responseType) {
+        return delete(url, requestBody, params, headers, responseType, Collections.emptySet());
+    }
+
+    /**
+     * Delete requestBody with medieType format and deserialize response.
+     *
+     * @param <R> the generic type
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param responseType the response type
+     * @param httpListeners the http listeners
+     * @return the http request completion
+     */
     <R> HttpRequestCompletion<R> delete(String url, Object requestBody, Map<String, Serializable> params,
-        Map<String, String> headers, Class<R> responseType);
+        Map<String, String> headers, Class<R> responseType, Collection<HttpListener> httpListeners);
 
 }

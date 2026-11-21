@@ -10,6 +10,7 @@ package cn.featherfly.jhttp.request;
 
 import java.util.Collections;
 
+import cn.featherfly.jhttp.HttpListener;
 import cn.featherfly.jhttp.HttpSyncClient;
 
 /**
@@ -19,9 +20,24 @@ import cn.featherfly.jhttp.HttpSyncClient;
  */
 public class HttpRequestBuilderTest {
 
-    public static void main(String[] args) {
-        HttpRequestBuilder builder = null;
+    HttpSyncClient http = null;
 
+    HttpRequestBuilder builder = null;
+
+    BasicMethodHttpRequestBuilder basicMethodBuilder = null;
+
+    FormMethodHttpRequestBuilder formMethodBuilder = null;
+
+    HttpListener listener;
+
+    void listener() {
+        http.request(req -> req.addListener(listener).removeListener(listener).clearListeners().url("").get());
+
+        http.get(req -> req.addListener(listener).removeListener(listener).clearListeners().url(""));
+        http.post(req -> req.addListener(listener).removeListener(listener).clearListeners().url(""));
+    }
+
+    void request() {
         // http get
         builder.url("").get().getHttpRequest();
         // set header
@@ -122,8 +138,9 @@ public class HttpRequestBuilderTest {
         builder.url("").patch().header(hb -> hb.add("header", "")).parameter(pb -> pb.body(String.class))
             .getHttpRequest();
 
-        BasicMethodHttpRequestBuilder basicMethodBuilder = null;
+    }
 
+    void requestMethod() {
         // http get head delete
         basicMethodBuilder.url("").getHttpRequest();
         // set header
@@ -141,7 +158,6 @@ public class HttpRequestBuilderTest {
         basicMethodBuilder.url("").header(hb -> hb.add("header", "")).parameter(pb -> pb.set("name", ""))
             .getHttpRequest();
 
-        FormMethodHttpRequestBuilder formMethodBuilder = null;
         // http post put patch
         formMethodBuilder.url("").getHttpRequest();
         // set header
@@ -158,8 +174,9 @@ public class HttpRequestBuilderTest {
         formMethodBuilder.url("").header(Collections.emptyMap()).parameter(pb -> pb.set("name", "")).getHttpRequest();
         formMethodBuilder.url("").header(hb -> hb.add("header", "")).parameter(pb -> pb.body(String.class))
             .getHttpRequest();
+    }
 
-        HttpSyncClient http = null;
+    void http() {
         // get request
         http.get(rb -> rb.url(""));
         // set header

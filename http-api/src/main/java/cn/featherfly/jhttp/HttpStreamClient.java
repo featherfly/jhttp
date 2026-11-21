@@ -11,12 +11,11 @@
 package cn.featherfly.jhttp;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpRequest;
 import cn.featherfly.jhttp.request.HttpRequestAware;
 import cn.featherfly.jhttp.request.HttpRequestBuilder;
 
@@ -34,23 +33,7 @@ public interface HttpStreamClient<S> {
      * @param requestBuilder the request builder
      * @return the input stream
      */
-    default S stream(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder) {
-        HttpRequest request = requestBuilder.apply(new HttpReQuestBuilderImpl()).getHttpRequest();
-        switch (request.getMethod()) {
-            case GET:
-                return stream(HttpMethod.GET, request.getUrl(), request.getParameters(), request.getHeaders());
-            case POST:
-                return stream(HttpMethod.POST, request.getUrl(), request.getParameters(), request.getHeaders());
-            case PUT:
-                return stream(HttpMethod.PUT, request.getUrl(), request.getParameters(), request.getHeaders());
-            case DELETE:
-                return stream(HttpMethod.DELETE, request.getUrl(), request.getParameters(), request.getHeaders());
-            case PATCH:
-                return stream(HttpMethod.PATCH, request.getUrl(), request.getParameters(), request.getHeaders());
-            default:
-                throw new HttpException("unsupport http method " + request.getMethod().toString());
-        }
-    }
+    S stream(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder);
 
     /**
      * Stream.
@@ -76,7 +59,6 @@ public interface HttpStreamClient<S> {
     /**
      * Stream.
      *
-     * @param httpMethod the http method
      * @param url the url
      * @param params the params
      * @return the input stream
@@ -100,7 +82,6 @@ public interface HttpStreamClient<S> {
     /**
      * Stream.
      *
-     * @param httpMethod the http method
      * @param url the url
      * @param params the params
      * @param headers the headers
@@ -119,12 +100,28 @@ public interface HttpStreamClient<S> {
      * @param headers the headers
      * @return the input stream
      */
-    S stream(HttpMethod httpMethod, String url, Map<String, Serializable> params, Map<String, String> headers);
+    default S stream(HttpMethod httpMethod, String url, Map<String, Serializable> params, Map<String, String> headers) {
+        return stream(httpMethod, url, params, headers, Collections.emptySet());
+    }
 
     /**
      * Stream.
      *
      * @param httpMethod the http method
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return the input stream
+     */
+    default S stream(HttpMethod httpMethod, String url, Map<String, Serializable> params, Map<String, String> headers,
+        Collection<HttpListener> listeners) {
+        return stream(httpMethod, url, null, params, headers, listeners);
+    }
+
+    /**
+     * Stream.
+     *
      * @param url the url
      * @param requestBody the request body
      * @return the input stream
@@ -148,7 +145,6 @@ public interface HttpStreamClient<S> {
     /**
      * Stream.
      *
-     * @param httpMethod the http method
      * @param url the url
      * @param requestBody the request body
      * @param headers the headers
@@ -167,5 +163,51 @@ public interface HttpStreamClient<S> {
      * @param headers the headers
      * @return the input stream
      */
-    S stream(HttpMethod httpMethod, String url, Object requestBody, Map<String, String> headers);
+    default S stream(HttpMethod httpMethod, String url, Object requestBody, Map<String, String> headers) {
+        return stream(httpMethod, url, requestBody, headers, Collections.emptySet());
+    }
+
+    /**
+     * Stream.
+     *
+     * @param httpMethod the http method
+     * @param url the url
+     * @param requestBody the request body
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return the input stream
+     */
+    default S stream(HttpMethod httpMethod, String url, Object requestBody, Map<String, String> headers,
+        Collection<HttpListener> listeners) {
+        return stream(httpMethod, url, requestBody, Collections.emptyMap(), headers, listeners);
+    }
+
+    /**
+     * Stream.
+     *
+     * @param httpMethod the http method
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @return the input stream
+     */
+    default S stream(HttpMethod httpMethod, String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers) {
+        return stream(httpMethod, url, requestBody, params, headers, Collections.emptySet());
+    }
+
+    /**
+     * Stream.
+     *
+     * @param httpMethod the http method
+     * @param url the url
+     * @param requestBody the request body
+     * @param params the params
+     * @param headers the headers
+     * @param listeners the listeners
+     * @return the input stream
+     */
+    S stream(HttpMethod httpMethod, String url, Object requestBody, Map<String, Serializable> params,
+        Map<String, String> headers, Collection<HttpListener> listeners);
 }

@@ -21,14 +21,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-import io.reactivex.rxjava3.core.Observable;
-
 import cn.featherfly.common.io.FileUtils;
 import cn.featherfly.common.lang.AssertIllegalArgument;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpRequest;
 import cn.featherfly.jhttp.request.HttpRequestAware;
 import cn.featherfly.jhttp.request.HttpRequestBuilder;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Client.
@@ -45,28 +42,7 @@ public interface HttpDownloadClient<D> {
      * @param output the output
      * @return the download size result
      */
-    default D download(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder, OutputStream output) {
-        HttpRequest request = requestBuilder.apply(new HttpReQuestBuilderImpl()).getHttpRequest();
-        switch (request.getMethod()) {
-            case GET:
-                return download(HttpMethod.GET, request.getUrl(), request.getParameters(), request.getHeaders(),
-                    output);
-            case POST:
-                return download(HttpMethod.POST, request.getUrl(), request.getParameters(), request.getHeaders(),
-                    output);
-            case PUT:
-                return download(HttpMethod.PUT, request.getUrl(), request.getParameters(), request.getHeaders(),
-                    output);
-            case DELETE:
-                return download(HttpMethod.DELETE, request.getUrl(), request.getParameters(), request.getHeaders(),
-                    output);
-            case PATCH:
-                return download(HttpMethod.PATCH, request.getUrl(), request.getParameters(), request.getHeaders(),
-                    output);
-            default:
-                throw new HttpException("unsupport http method " + request.getMethod().toString());
-        }
-    }
+    D download(Function<HttpRequestBuilder, HttpRequestAware> requestBuilder, OutputStream output);
 
     /**
      * Download.

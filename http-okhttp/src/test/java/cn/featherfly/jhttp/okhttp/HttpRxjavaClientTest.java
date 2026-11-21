@@ -5,13 +5,18 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.testng.annotations.Test;
 
+import cn.featherfly.common.lang.Console;
 import cn.featherfly.common.lang.Str;
 import cn.featherfly.http.server.Result;
 import cn.featherfly.http.server.User;
+import cn.featherfly.jhttp.HttpListener;
+import cn.featherfly.jhttp.HttpRxjavaClient;
+import cn.featherfly.jhttp.MediaType;
 
 /**
  * Test for the rxjava client.
@@ -23,6 +28,10 @@ public class HttpRxjavaClientTest {
     final String host = "http://localhost:8080/{0}";
 
     HttpRxjavaClientImpl http = HttpRxjavaClientImpl.builder().build();
+
+    User user;
+
+    final String OK = "OK";
 
     @Test
     public void get() throws InterruptedException {
@@ -38,6 +47,76 @@ public class HttpRxjavaClientTest {
         }, latch::countDown);
         latch.await(10, TimeUnit.SECONDS);
         assertEquals(result.get(), json);
+    }
+
+    @Test
+    public void listener() throws InterruptedException {
+        String url = Str.format(host, "user2");
+
+        AtomicLong deserializeCount = new AtomicLong(0);
+        AtomicLong serializeCount = new AtomicLong(0);
+        HttpListener listener = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                Console.log("onDeserialize: mediaType = {}", mediaType.toString());
+                deserializeCount.incrementAndGet();
+                System.out.println(new String(responseBody, mediaType.getCharset()));
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                Console.log("onSerialize: mediaType = {}", mediaType.toString());
+                System.out.println(new String(serializeBody, mediaType.getCharset()));
+                serializeCount.incrementAndGet();
+            }
+        };
+        HttpListener listener2 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                System.out.println("onDeserialize2");
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                System.out.println("onSerialize2");
+                serializeCount.incrementAndGet();
+            }
+        };
+        HttpListener listener3 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                System.out.println("onDeserialize3");
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                System.out.println("onSerialize3");
+                serializeCount.incrementAndGet();
+            }
+        };
+
+        HttpRxjavaClient http = new HttpRxjavaClientBuilder()//
+            .listener(listener, listener2, listener3).build();
+
+        http.post(url, user, Result.class).subscribe(result -> {
+            System.out.println(result);
+            assertEquals(result.getCode(), OK);
+            assertEquals(deserializeCount.get(), 3);
+            assertEquals(serializeCount.get(), 3);
+        });
+
+        http.post(req -> req.removeListener(listener, listener2, listener3).url(url).parameter(user), Result.class)
+            .subscribe(result -> {
+                System.out.println(result);
+                assertEquals(result.getCode(), OK);
+                assertEquals(deserializeCount.get(), 0);
+                assertEquals(serializeCount.get(), 0);
+            });
+
+        Thread.sleep(1000L);
+        System.out.println("end");
     }
 
     @Test

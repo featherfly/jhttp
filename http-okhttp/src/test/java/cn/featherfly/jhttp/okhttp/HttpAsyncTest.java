@@ -11,13 +11,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.annotations.Test;
 
+import cn.featherfly.common.lang.Console;
 import cn.featherfly.common.lang.Str;
 import cn.featherfly.common.lang.SystemPropertyUtils;
 import cn.featherfly.common.lang.WordUtils;
 import cn.featherfly.common.serialization.Serialization;
 import cn.featherfly.common.structure.ChainMapImpl;
+import cn.featherfly.http.server.Result;
 import cn.featherfly.http.server.User;
 import cn.featherfly.jhttp.HttpAsyncClient;
+import cn.featherfly.jhttp.HttpListener;
+import cn.featherfly.jhttp.MediaType;
 import cn.featherfly.jhttp.UploadFile;
 
 /**
@@ -44,62 +48,75 @@ public class HttpAsyncTest {
         user.setAge(18);
     }
 
-    //    @Test
-    //    public void listener() throws MimeTypeParseException {
-    //        String url = Str.format(host, "user2");
-    //        Result result = null;
-    //        HttpSyncClientImpl http = new HttpSyncClientImpl();
-    //        http.setDeserializeWithContentType(true);
-    //        HttpListener listener = new HttpListener() {
-    //            @Override
-    //            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
-    //                Console.log("onDeserialize: mediaType = {}", mediaType.toString());
-    //                System.out.println(new String(responseBody, mediaType.charset()));
-    //            }
-    //
-    //            @Override
-    //            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
-    //                Console.log("onSerialize: mediaType = {}", mediaType.toString());
-    //                System.out.println(new String(serializeBody, mediaType.charset()));
-    //            }
-    //        };
-    //        HttpListener listener2 = new HttpListener() {
-    //            @Override
-    //            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
-    //                System.out.println("onDeserialize2");
-    //            }
-    //
-    //            @Override
-    //            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
-    //                System.out.println("onSerialize2");
-    //            }
-    //        };
-    //        HttpListener listener3 = new HttpListener() {
-    //            @Override
-    //            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
-    //                System.out.println("onDeserialize3");
-    //            }
-    //
-    //            @Override
-    //            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
-    //                System.out.println("onSerialize3");
-    //            }
-    //        };
-    //        http.on(listener);
-    //        http.on(listener3);
-    //        http.on(listener2);
-    //
-    //        result = http.post(url, user, Result.class);
-    //        System.out.println(result);
-    //        assertEquals(result.getCode(), OK);
-    //
-    //        http.remove(listener);
-    //        http.remove(listener2);
-    //        http.remove(listener3);
-    //        result = http.post(url, user, Result.class);
-    //        System.out.println(result);
-    //        assertEquals(result.getCode(), OK);
-    //    }
+    @Test
+    public void listener() throws InterruptedException {
+        String url = Str.format(host, "user2");
+
+        AtomicLong deserializeCount = new AtomicLong(0);
+        AtomicLong serializeCount = new AtomicLong(0);
+        HttpListener listener = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                Console.log("onDeserialize: mediaType = {}", mediaType.toString());
+                deserializeCount.incrementAndGet();
+                System.out.println(new String(responseBody, mediaType.getCharset()));
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                Console.log("onSerialize: mediaType = {}", mediaType.toString());
+                System.out.println(new String(serializeBody, mediaType.getCharset()));
+                serializeCount.incrementAndGet();
+            }
+        };
+        HttpListener listener2 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                System.out.println("onDeserialize2");
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                System.out.println("onSerialize2");
+                serializeCount.incrementAndGet();
+            }
+        };
+        HttpListener listener3 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
+                System.out.println("onDeserialize3");
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
+                System.out.println("onSerialize3");
+                serializeCount.incrementAndGet();
+            }
+        };
+
+        HttpAsyncClient http = new HttpAsyncClientBuilder()//
+            .listener(listener, listener2, listener3).build();
+
+        http.post(url, user, Result.class).completion(result -> {
+            System.out.println(result);
+            assertEquals(result.getCode(), OK);
+            assertEquals(deserializeCount.get(), 3);
+            assertEquals(serializeCount.get(), 3);
+        });
+
+        http.post(req -> req.removeListener(listener, listener2, listener3).url(url).parameter(user), Result.class)
+            .completion(result -> {
+                System.out.println(result);
+                assertEquals(result.getCode(), OK);
+                assertEquals(deserializeCount.get(), 0);
+                assertEquals(serializeCount.get(), 0);
+            });
+
+        Thread.sleep(1000L);
+        System.out.println("end");
+    }
 
     @Test
     public void get() throws InterruptedException {

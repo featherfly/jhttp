@@ -28,28 +28,6 @@ public final class Http {
     }
 
     /**
-     * On.
-     *
-     * @param listener the listener
-     * @return the http sync client
-     * @see cn.featherfly.jhttp.HttpClient#on(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpSyncClient on(HttpListener listener) {
-        return CLIENT.on(listener);
-    }
-
-    /**
-     * Un.
-     *
-     * @param listener the listener
-     * @return the http sync client
-     * @see cn.featherfly.jhttp.HttpClient#un(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpSyncClient un(HttpListener listener) {
-        return CLIENT.un(listener);
-    }
-
-    /**
      * Shutdown.
      */
     public static void shutdown() {

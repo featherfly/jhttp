@@ -33,7 +33,7 @@ public class HttpRxjavaClientBuilder extends AbstractHttpClientBuilder<HttpRxjav
     @Override
     public HttpRxjavaClientImpl build() {
         prepareToBuild();
-        HttpRxjavaClientImpl client = new HttpRxjavaClientImpl(createClient(), defaultHeaders, serialization,
+        HttpRxjavaClientImpl client = new HttpRxjavaClientImpl(createClient(), defaultHeaders, listeners, serialization,
             mediaType);
         applyCommon(client);
         client.setAutoSubscribeOnIo(autoSubscribeOnIo);

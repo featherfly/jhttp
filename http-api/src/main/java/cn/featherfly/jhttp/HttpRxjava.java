@@ -10,8 +10,6 @@ import java.util.function.Function;
 import cn.featherfly.jhttp.HttpDownloadClient.ProgressConsumer;
 import cn.featherfly.jhttp.request.BasicMethodHttpRequestBuilder;
 import cn.featherfly.jhttp.request.FormMethodHttpRequestBuilder;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.BasicMethodHttpRequestBuilderImpl;
-import cn.featherfly.jhttp.request.HttpReQuestBuilderImpl.FormMethodHttpRequestBuilderImpl;
 import cn.featherfly.jhttp.request.HttpRequestAware;
 import cn.featherfly.jhttp.request.HttpRequestBuilder;
 import io.reactivex.rxjava3.core.Observable;
@@ -26,28 +24,6 @@ public final class HttpRxjava {
     private static final HttpRxjavaClient CLIENT = HttpClientBuilder.rxjava().build();
 
     private HttpRxjava() {
-    }
-
-    /**
-     * On.
-     *
-     * @param listener the listener
-     * @return the http rxjava client
-     * @see cn.featherfly.jhttp.HttpClient#on(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpRxjavaClient on(HttpListener listener) {
-        return CLIENT.on(listener);
-    }
-
-    /**
-     * Un.
-     *
-     * @param listener the listener
-     * @return the http rxjava client
-     * @see cn.featherfly.jhttp.HttpClient#un(cn.featherfly.jhttp.HttpListener)
-     */
-    public static HttpRxjavaClient un(HttpListener listener) {
-        return CLIENT.un(listener);
     }
 
     /**
@@ -1021,7 +997,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#get(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> get(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> get(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.get(requestBuilder, responseType);
     }
@@ -1088,7 +1064,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#head(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> head(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> head(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.head(requestBuilder, responseType);
     }
@@ -1178,7 +1154,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#post(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> post(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> post(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.post(requestBuilder, responseType);
     }
@@ -1249,7 +1225,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#put(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> put(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> put(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.put(requestBuilder, responseType);
     }
@@ -1264,7 +1240,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#patch(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> patch(Function<FormMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> patch(Function<FormMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.patch(requestBuilder, responseType);
     }
@@ -1279,7 +1255,7 @@ public final class HttpRxjava {
      * @see cn.featherfly.common.http.HttpRxjavaClient#delete(java.util.function.Function,
      *      java.lang.Class)
      */
-    public static <R> Observable<R> delete(Function<BasicMethodHttpRequestBuilderImpl, HttpRequestAware> requestBuilder,
+    public static <R> Observable<R> delete(Function<BasicMethodHttpRequestBuilder, HttpRequestAware> requestBuilder,
         Class<R> responseType) {
         return CLIENT.delete(requestBuilder, responseType);
     }

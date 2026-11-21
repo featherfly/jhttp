@@ -51,14 +51,16 @@ public class HttpSyncClientTest {
 
     @Test
     public void listener() {
+        AtomicLong deserializeCount = new AtomicLong(0);
+        AtomicLong serializeCount = new AtomicLong(0);
         String url = Str.format(host, "user2");
         Result result = null;
-        HttpSyncClientImpl http = new HttpSyncClientBuilder().build();
         http.setDeserializeWithContentType(true);
         HttpListener listener = new HttpListener() {
             @Override
             public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
                 Console.log("onDeserialize: mediaType = {}", mediaType.toString());
+                deserializeCount.incrementAndGet();
                 System.out.println(new String(responseBody, mediaType.getCharset()));
             }
 
@@ -66,44 +68,58 @@ public class HttpSyncClientTest {
             public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
                 Console.log("onSerialize: mediaType = {}", mediaType.toString());
                 System.out.println(new String(serializeBody, mediaType.getCharset()));
+                serializeCount.incrementAndGet();
             }
         };
         HttpListener listener2 = new HttpListener() {
             @Override
             public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
                 System.out.println("onDeserialize2");
+                deserializeCount.incrementAndGet();
             }
 
             @Override
             public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
                 System.out.println("onSerialize2");
+                serializeCount.incrementAndGet();
             }
         };
         HttpListener listener3 = new HttpListener() {
             @Override
             public void onDeserialize(byte[] responseBody, Object deserializeBody, MediaType mediaType) {
                 System.out.println("onDeserialize3");
+                deserializeCount.incrementAndGet();
             }
 
             @Override
             public void onSerialize(Object requestBody, byte[] serializeBody, MediaType mediaType) {
                 System.out.println("onSerialize3");
+                serializeCount.incrementAndGet();
             }
         };
-        http.on(listener);
-        http.on(listener3);
-        http.on(listener2);
+
+        HttpSyncClientImpl http = new HttpSyncClientBuilder() //
+            .listener(listener, listener2, listener3).build();
 
         result = http.post(url, user, Result.class);
-        System.out.println(result);
-        assertEquals(result.getCode(), OK);
 
-        http.un(listener);
-        http.un(listener2);
-        http.un(listener3);
-        result = http.post(url, user, Result.class);
         System.out.println(result);
         assertEquals(result.getCode(), OK);
+        assertEquals(deserializeCount.get(), 3);
+        assertEquals(serializeCount.get(), 3);
+
+        deserializeCount.set(0);
+        serializeCount.set(0);
+
+        //        http.un(listener);
+        //        http.un(listener2);
+        //        http.un(listener3);
+        //        result = http.post(url, user, Result.class);
+        http.post(req -> req.removeListener(listener, listener2, listener3).url(url).parameter(user), Result.class);
+        System.out.println(result);
+        assertEquals(result.getCode(), OK);
+        assertEquals(deserializeCount.get(), 0);
+        assertEquals(serializeCount.get(), 0);
 
         //        HttpSyncClientImpl xmlClient = new HttpSyncClientImpl(new HttpRequestConfig(), Serialization.getDefault(),
         //            OkHttpUtils.XML_MEDIA_TYPE);

@@ -9,11 +9,15 @@
 package cn.featherfly.jhttp.request;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import cn.featherfly.common.lang.ArrayUtils;
 import cn.featherfly.jhttp.HttpException;
+import cn.featherfly.jhttp.HttpListener;
 import cn.featherfly.jhttp.HttpMethod;
 
 /**
@@ -28,8 +32,18 @@ public class HttpReQuestBuilderImpl implements HttpRequestBuilder, UrlAware {
     /**
      * Instantiates a new http re quest builder impl.
      */
-    public HttpReQuestBuilderImpl() {
+    private HttpReQuestBuilderImpl() {
         httpRequest = new HttpRequest();
+    }
+
+    /**
+     * Instantiates a new http re quest builder impl.
+     *
+     * @param listeners the listeners
+     */
+    public HttpReQuestBuilderImpl(Collection<HttpListener> listeners) {
+        httpRequest = new HttpRequest();
+        httpRequest.getListeners().addAll(listeners);
     }
 
     /**
@@ -410,15 +424,19 @@ public class HttpReQuestBuilderImpl implements HttpRequestBuilder, UrlAware {
      */
     public static class BasicMethodHttpRequestBuilderImpl implements BasicMethodHttpRequestBuilder {
 
-        private HttpMethod method;
+        private final HttpMethod method;
+
+        private final Set<HttpListener> listeners = new LinkedHashSet<>(0);
 
         /**
          * Instantiates a new basic method http request builder impl.
          *
          * @param method the method
+         * @param listeners the listeners
          */
-        public BasicMethodHttpRequestBuilderImpl(HttpMethod method) {
+        public BasicMethodHttpRequestBuilderImpl(HttpMethod method, Collection<HttpListener> listeners) {
             this.method = method;
+            this.listeners.addAll(listeners);
         }
 
         /**
@@ -429,14 +447,41 @@ public class HttpReQuestBuilderImpl implements HttpRequestBuilder, UrlAware {
             HttpRequestBuilder requestBuilder = new HttpReQuestBuilderImpl();
             switch (method) {
                 case GET:
-                    return requestBuilder.url(url).get();
+                    return requestBuilder.addListener(listeners).url(url).get();
                 case HEAD:
-                    return requestBuilder.url(url).head();
+                    return requestBuilder.addListener(listeners).url(url).head();
                 case DELETE:
-                    return requestBuilder.url(url).delete();
+                    return requestBuilder.addListener(listeners).url(url).delete();
                 default:
                     throw new HttpException("unsupport http method " + method);
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlMethodAware> addListener(HttpListener listener) {
+            listeners.add(listener);
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlMethodAware> removeListener(HttpListener listener) {
+            listeners.remove(listener);
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlMethodAware> clearListeners() {
+            listeners.clear();
+            return this;
         }
     }
 
@@ -445,15 +490,19 @@ public class HttpReQuestBuilderImpl implements HttpRequestBuilder, UrlAware {
      */
     public static class FormMethodHttpRequestBuilderImpl implements FormMethodHttpRequestBuilder {
 
-        private HttpMethod method;
+        private final HttpMethod method;
+
+        private final Set<HttpListener> listeners = new LinkedHashSet<>(0);
 
         /**
          * Instantiates a new form method http request builder impl.
          *
          * @param method the method
+         * @param listeners the listeners
          */
-        public FormMethodHttpRequestBuilderImpl(HttpMethod method) {
+        public FormMethodHttpRequestBuilderImpl(HttpMethod method, Collection<HttpListener> listeners) {
             this.method = method;
+            this.listeners.addAll(listeners);
         }
 
         /**
@@ -464,14 +513,68 @@ public class HttpReQuestBuilderImpl implements HttpRequestBuilder, UrlAware {
             HttpRequestBuilder requestBuilder = new HttpReQuestBuilderImpl();
             switch (method) {
                 case POST:
-                    return requestBuilder.url(url).post();
+                    return requestBuilder.addListener(listeners).url(url).post();
                 case PUT:
-                    return requestBuilder.url(url).put();
+                    return requestBuilder.addListener(listeners).url(url).put();
                 case PATCH:
-                    return requestBuilder.url(url).patch();
+                    return requestBuilder.addListener(listeners).url(url).patch();
                 default:
                     throw new HttpException("unsupport http method " + method);
             }
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlFormMethodAware> addListener(HttpListener listener) {
+            listeners.add(listener);
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlFormMethodAware> removeListener(HttpListener listener) {
+            listeners.remove(listener);
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public MethodAwareHttpBuilder<UrlFormMethodAware> clearListeners() {
+            listeners.clear();
+            return this;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public HttpRequestBuilder addListener(HttpListener listener) {
+        httpRequest.getListeners().add(listener);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public HttpRequestBuilder removeListener(HttpListener listener) {
+        httpRequest.getListeners().remove(listener);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public HttpRequestBuilder clearListeners() {
+        httpRequest.getListeners().clear();
+        return this;
     }
 }

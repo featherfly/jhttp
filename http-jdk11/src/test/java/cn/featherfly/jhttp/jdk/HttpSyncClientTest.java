@@ -46,25 +46,66 @@ public class HttpSyncClientTest {
 
     @Test
     public void listener() {
+        AtomicLong deserializeCount = new AtomicLong(0);
+        AtomicLong serializeCount = new AtomicLong(0);
         String url = Str.format(host, "user2");
-        HttpSyncClientImpl client = HttpSyncClientImpl.builder().deserializeWithContentType(true).build();
         HttpListener listener = new HttpListener() {
             @Override
             public void onDeserialize(byte[] responseBody, Object deserializeBody,
                 cn.featherfly.jhttp.MediaType mediaType) {
-                System.out.println(new String(responseBody, mediaType.getCharset()));
+                deserializeCount.incrementAndGet();
             }
 
             @Override
-            public void onSerialize(Object requestBody, byte[] serializeBody, cn.featherfly.jhttp.MediaType mediaType) {
-                System.out.println(new String(serializeBody, mediaType.getCharset()));
+            public void onSerialize(Object requestBody, byte[] serializeBody,
+                cn.featherfly.jhttp.MediaType mediaType) {
+                serializeCount.incrementAndGet();
             }
         };
-        client.on(listener);
+        HttpListener listener2 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody,
+                cn.featherfly.jhttp.MediaType mediaType) {
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody,
+                cn.featherfly.jhttp.MediaType mediaType) {
+                serializeCount.incrementAndGet();
+            }
+        };
+        HttpListener listener3 = new HttpListener() {
+            @Override
+            public void onDeserialize(byte[] responseBody, Object deserializeBody,
+                cn.featherfly.jhttp.MediaType mediaType) {
+                deserializeCount.incrementAndGet();
+            }
+
+            @Override
+            public void onSerialize(Object requestBody, byte[] serializeBody,
+                cn.featherfly.jhttp.MediaType mediaType) {
+                serializeCount.incrementAndGet();
+            }
+        };
+
+        HttpSyncClientImpl client = HttpSyncClientImpl.builder().deserializeWithContentType(true)
+            .listener(listener, listener2, listener3).build();
+
         Result result = client.post(url, user, Result.class);
+        System.out.println(result);
         assertEquals(result.getCode(), OK);
-        client.un(listener);
-        assertEquals(client.post(url, user, Result.class).getCode(), OK);
+        assertEquals(deserializeCount.get(), 3);
+        assertEquals(serializeCount.get(), 3);
+
+        deserializeCount.set(0);
+        serializeCount.set(0);
+
+        // remove the listeners for this request only
+        client.post(req -> req.removeListener(listener, listener2, listener3).url(url).parameter(user), Result.class);
+        assertEquals(result.getCode(), OK);
+        assertEquals(deserializeCount.get(), 0);
+        assertEquals(serializeCount.get(), 0);
     }
 
     @Test

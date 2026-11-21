@@ -2,6 +2,7 @@ package cn.featherfly.jhttp.okhttp;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -21,6 +22,7 @@ import cn.featherfly.common.serialization.SerializableStrategy;
 import cn.featherfly.common.serialization.SerializationException;
 import cn.featherfly.common.serialization.SerializationExceptionCode;
 import cn.featherfly.common.serialization.Serializer;
+import cn.featherfly.common.structure.ChainSetImpl;
 import cn.featherfly.jhttp.HttpCode;
 import cn.featherfly.jhttp.HttpErrorResponseException;
 import cn.featherfly.jhttp.HttpException;
@@ -79,12 +81,13 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      *
      * @param client the client
      * @param headers the headers
+     * @param listeners the listeners
      * @param serialization the serialization
      * @param mediaType the media type
      */
-    protected AbstractHttpClient(OkHttpClient client, Map<String, String> headers, SerializableStrategy serialization,
-        MediaType mediaType) {
-        init(client, headers, serialization, mediaType);
+    protected AbstractHttpClient(OkHttpClient client, Map<String, String> headers, Set<HttpListener> listeners,
+        SerializableStrategy serialization, MediaType mediaType) {
+        init(client, headers, listeners, serialization, mediaType);
     }
 
     /**
@@ -92,11 +95,12 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      *
      * @param client the client
      * @param headers the headers
+     * @param listeners the listeners
      * @param serialization the serialization
      * @param mediaType the media type
      */
-    protected void init(OkHttpClient client, Map<String, String> headers, SerializableStrategy serialization,
-        MediaType mediaType) {
+    protected void init(OkHttpClient client, Map<String, String> headers, Set<HttpListener> listeners,
+        SerializableStrategy serialization, MediaType mediaType) {
         AssertIllegalArgument.isNotNull(client, "client");
         AssertIllegalArgument.isNotNull(serialization, "serialization");
         AssertIllegalArgument.isNotNull(mediaType, "mediaType");
@@ -104,6 +108,10 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
         this.client = client;
         this.serialization = serialization;
         this.mediaType = mediaType;
+
+        if (Lang.isNotEmpty(listeners)) {
+            this.listeners.addAll(listeners);
+        }
 
         if (this.mediaType.charset() != null) {
             textPlain = MediaType.parse("text/plain; charset=" + this.mediaType.charset());
@@ -177,9 +185,10 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      * serialize.
      *
      * @param requestBody the request body
+     * @param listeners the listeners
      * @return the serialized byte[]
      */
-    protected byte[] serialize(Object requestBody) {
+    protected byte[] serialize(Object requestBody, Collection<HttpListener> listeners) {
         if (requestBody instanceof String) {
             return ((String) requestBody).getBytes(mediaType.charset());
         } else if (requestBody instanceof byte[]) {
@@ -201,10 +210,12 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
      * @param <T> the generic type
      * @param response the response
      * @param responseType the response type
+     * @param listeners the listeners
      * @return the deserialized object
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    protected <T> T deserialize(Response response, final Class<T> responseType) throws IOException {
+    protected <T> T deserialize(Response response, final Class<T> responseType, Collection<HttpListener> listeners)
+        throws IOException {
         Serializer resSerializer = getSerializer(response);
         if (listeners.isEmpty()) {
             // body().bytes() 会自动关闭
@@ -353,6 +364,22 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
     }
 
     /**
+     * Gets the final listeners.
+     * 获取请求会话最终的listeners,包含client自身的和用户针对单个请求会话独立配置的.
+     *
+     * @param customListeners the custom listeners
+     * @return the final listeners
+     */
+    protected Collection<HttpListener> getFinalListeners(Collection<HttpListener> customListeners) {
+        ChainSetImpl<HttpListener> finalListeners = new ChainSetImpl<>(new LinkedHashSet<>());
+        finalListeners.addAll(listeners);
+        if (customListeners != null) {
+            finalListeners.addAll(customListeners);
+        }
+        return finalListeners;
+    }
+
+    /**
      * Gets the success response.
      *
      * @param request the request
@@ -371,30 +398,6 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
         } catch (IOException e) {
             throw new HttpException(e);
         }
-    }
-
-    /**
-     * On.
-     *
-     * @param listener the listener
-     * @return the c
-     */
-    @SuppressWarnings("unchecked")
-    public C on(HttpListener listener) {
-        listeners.add(listener);
-        return (C) this;
-    }
-
-    /**
-     * Removes the.
-     *
-     * @param listener the listener
-     * @return the c
-     */
-    @SuppressWarnings("unchecked")
-    public C un(HttpListener listener) {
-        listeners.remove(listener);
-        return (C) this;
     }
 
     /**
@@ -432,6 +435,15 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
         };
     }
 
+    /**
+     * Download request.
+     *
+     * @param httpMethod the http method
+     * @param url the url
+     * @param params the params
+     * @param headers the headers
+     * @return the request
+     */
     protected Request downloadRequest(HttpMethod httpMethod, String url, Map<String, Serializable> params,
         Map<String, String> headers) {
         switch (httpMethod) {
@@ -454,5 +466,4 @@ public abstract class AbstractHttpClient<C extends AbstractHttpClient<C>> {
                 throw new HttpException("download unsupport http method " + httpMethod.toString());
         }
     }
-
 }
