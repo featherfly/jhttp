@@ -1,0 +1,28 @@
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(jdkVersion as Integer)
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-parameters"
+}
+tasks.withType(Javadoc) {
+    options.encoding = "UTF-8"
+    options.locale = "en"
+}
+
+jar {
+    manifest.attributes 'Build-Name': archivesBaseName
+    manifest.attributes 'Build-By': "zhong ji"
+    manifest.attributes 'Build-JDK' : jdkVersion
+    manifest.attributes 'Build-Tool' : "gradle " + gradle.gradleVersion
+    manifest.attributes 'Build-Tool-Jdk' : ant.properties['java.runtime.version']
+    manifest.attributes 'Build-OS' : ant.properties['os.name'] + "  --  " + ant.properties['os.version'] + "  --  " + ant.properties['os.arch']
+    manifest.attributes 'Build-User' : ant.properties["user.name"]
+    manifest.attributes 'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0'
+}

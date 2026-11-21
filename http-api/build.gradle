@@ -1,0 +1,5 @@
+dependencies {
+	api libs.ff.common.core
+	
+	implementation libs.rxjava
+}

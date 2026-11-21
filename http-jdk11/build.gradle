@@ -1,0 +1,21 @@
+dependencies {
+    api project(':http-api')
+    api libs.ff.common.serialization
+    // common-serialization still references javax.activation.MimeType, removed from the JDK in 11
+    implementation 'com.sun.activation:javax.activation:1.2.0'
+
+    implementation libs.rxjava
+
+    testImplementation project(':mock-server')
+    testImplementation "org.springframework.boot:spring-boot-starter-test:2.7.4"
+}
+
+configurations {
+    compile.transitive = true
+    testImplementation.exclude module: 'log4j'
+    testImplementation.exclude module: 'slf4j-log4j12'
+    testImplementation.exclude module: 'pull-parser'
+    testImplementation.exclude module: 'logback-core'
+    testImplementation.exclude module: 'logback-classic'
+    testImplementation.exclude module: 'spring-boot-starter-logging'
+}

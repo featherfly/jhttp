@@ -1,0 +1,25 @@
+ext {
+    springBootVersion = "2.7.4"
+}
+dependencies {
+    api "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+    api "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    api "io.springfox:springfox-swagger2:2.6.1"
+    api "io.springfox:springfox-swagger-ui:2.6.1"
+    api "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.5"
+}
+
+tasks.register('runServer', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'cn.featherfly.http.server.App'
+}
+
+configurations {
+    compile.transitive = true
+    api.exclude module: 'log4j'
+    api.exclude module: 'slf4j-log4j12'
+    api.exclude module: 'pull-parser'
+    api.exclude module: 'logback-core'
+    api.exclude module: 'logback-classic'
+    api.exclude module: 'spring-boot-starter-logging'
+}
